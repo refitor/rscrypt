@@ -1,4 +1,4 @@
-package rscrypto
+package rscrypt
 
 import (
 	"reflect"
