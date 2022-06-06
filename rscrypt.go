@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/crypto/ecies"
+	"github.com/ethereum/go-ethereum/crypto/secp256k1"
 )
 
 // aesKey: plain text
@@ -25,11 +26,36 @@ import (
 // privateKey: pem.memory
 // signature: base64.EncodeToString
 
-// =================== ECDH ====================================
-var fCurve = elliptic.P256
+func Md5(data string) string {
+	return string(sha256.Sum256([]byte(data))[:])
+}
 
+// =================== ECDH ====================================
+// Generate elliptic curve key pair using secp256k1
+func GenerateBitKey() ([]byte, []byte, error) {
+	privateKey, err := ecies.GenerateKey(rand.Reader, secp256k1.S256(), nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	privBuf, err := x509.MarshalECPrivateKey(privateKey.ExportECDSA())
+	if err != nil {
+		return nil, nil, err
+	} else {
+		privBuf = pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: privBuf})
+	}
+	pubBuf, err := x509.MarshalPKIXPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return nil, nil, err
+	} else {
+		pubBuf = pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: pubBuf})
+	}
+	return privBuf, pubBuf, nil
+}
+
+// Generate elliptic curve key pair using secp256r1
 func GenerateEcdsaKey() ([]byte, []byte, error) {
-	privateKey, err := ecdsa.GenerateKey(fCurve(), rand.Reader)
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	if err != nil {
 		return nil, nil, err
 	}
